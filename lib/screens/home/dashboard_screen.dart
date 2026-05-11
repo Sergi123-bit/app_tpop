@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../services/app_state.dart';
+import '../../services/firestore_service.dart';
 import '../../theme/app_theme.dart';
 import '../../models/models.dart';
 import '../closet/prenda_detail_screen.dart';
 
-class DashboardScreen extends StatelessWidget {
-  // ✅ Callback para ir a la pestaña de búsqueda/calendario
+class DashboardScreen extends StatefulWidget {
   final VoidCallback onIrACalendario;
 
   const DashboardScreen({
@@ -16,222 +16,242 @@ class DashboardScreen extends StatelessWidget {
   });
 
   @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  final _firestoreService = FirestoreService();
+
+  @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
 
-    return Scaffold(
-      backgroundColor: AppTheme.black,
-      body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
+    return StreamBuilder<List<Prenda>>(
+      stream: _firestoreService.prendasStream(),
+      builder: (context, snapshot) {
+        final prendas = snapshot.data ?? [];
 
-            // ── Cabecera ───────────────────────────────────────
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Hola,',
-                            style: GoogleFonts.dmSans(
-                              color: AppTheme.grey, fontSize: 14,
-                            ),
+        return Scaffold(
+          backgroundColor: AppTheme.bgColor(context),
+          body: SafeArea(
+            child: CustomScrollView(
+              slivers: [
+
+                // ── Cabecera ───────────────────────────────────────
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Hola,',
+                                style: GoogleFonts.dmSans(
+                                  color: AppTheme.greyColor(context),
+                                  fontSize: 14,
+                                ),
+                              ),
+                              Text(
+                                state.nombre.isEmpty ? 'Usuario' : state.nombre,
+                                style: GoogleFonts.bebasNeue(
+                                  fontSize: 32, letterSpacing: 2,
+                                  color: AppTheme.textColor(context),
+                                ),
+                              ),
+                            ],
                           ),
-                          Text(
-                            state.nombre.isEmpty ? 'Usuario' : state.nombre,
-                            style: GoogleFonts.bebasNeue(
-                              fontSize: 32, letterSpacing: 2,
-                              color: AppTheme.white,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      width: 44, height: 44,
-                      decoration: BoxDecoration(
-                        color: AppTheme.surface,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppTheme.blue, width: 1),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppTheme.blue.withOpacity(0.2),
-                            blurRadius: 8,
-                          ),
-                        ],
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(11),
-                        child: Image.asset(
-                          'assets/ropa/logo_del_Lobo.png',
-                          fit: BoxFit.cover,
                         ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            // ── Línea decorativa ───────────────────────────────
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
-                child: Container(
-                  height: 1,
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [AppTheme.blue, AppTheme.red, Colors.transparent],
+                        Container(
+                          width: 44, height: 44,
+                          decoration: BoxDecoration(
+                            color: AppTheme.surfaceColor(context),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppTheme.blue, width: 1),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppTheme.blue.withOpacity(0.2),
+                                blurRadius: 8,
+                              ),
+                            ],
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(11),
+                            child: Image.asset(
+                              'assets/ropa/logo_del_Lobo.png',
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
-              ),
-            ),
 
-            // ── Stats ──────────────────────────────────────────
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-                child: Row(
-                  children: [
-                    _StatCard(
-                      valor: '${PrendasData.prendas.length}',
-                      label: 'Prendas',
-                      icon: Icons.checkroom_outlined,
-                      color: AppTheme.blue,
-                    ),
-                    const SizedBox(width: 12),
-                    _StatCard(
-                      valor: '${state.favoritos.length}',
-                      label: 'Favoritos',
-                      icon: Icons.favorite_outline,
-                      color: AppTheme.red,
-                    ),
-                    const SizedBox(width: 12),
-                    _StatCard(
-                      valor: state.talla.isEmpty ? '-' : state.talla,
-                      label: 'Mi talla',
-                      icon: Icons.straighten_outlined,
-                      color: AppTheme.goldWhite,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            // ── Calendario semanal título ──────────────────────
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 28, 24, 12),
-                child: Row(
-                  children: [
-                    const Icon(Icons.calendar_today_outlined,
-                        color: AppTheme.blue, size: 16),
-                    const SizedBox(width: 8),
-                    Text('ESTA SEMANA',
-                      style: GoogleFonts.bebasNeue(
-                        fontSize: 18, letterSpacing: 3,
-                        color: AppTheme.goldWhite,
-                      ),
-                    ),
-                    const Spacer(),
-                    GestureDetector(
-                      onTap: onIrACalendario,
-                      child: Text('Ver todo',
-                        style: GoogleFonts.dmSans(
-                          color: AppTheme.blue,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            // ── Calendario semanal ─────────────────────────────
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                // ✅ Al tocar el calendario va a la pestaña de búsqueda
-                child: GestureDetector(
-                  onTap: onIrACalendario,
-                  child: const _CalendarioSemanal(),
-                ),
-              ),
-            ),
-
-            // ── Look del día título ────────────────────────────
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 28, 24, 12),
-                child: Row(
-                  children: [
-                    Text('LOOK DEL DÍA',
-                      style: GoogleFonts.bebasNeue(
-                        fontSize: 18, letterSpacing: 3,
-                        color: AppTheme.goldWhite,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      width: 6, height: 6,
+                // ── Línea decorativa ───────────────────────────────
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+                    child: Container(
+                      height: 1,
                       decoration: const BoxDecoration(
-                        shape: BoxShape.circle, color: AppTheme.blue,
+                        gradient: LinearGradient(
+                          colors: [AppTheme.blue, AppTheme.red, Colors.transparent],
+                        ),
                       ),
                     ),
-                  ],
-                ),
-              ),
-            ),
-
-            // ── Look del día tarjeta ───────────────────────────
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: const _LookDelDia(),
-              ),
-            ),
-
-            // ── Añadidas recientemente título ──────────────────
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 28, 24, 12),
-                child: Text('AÑADIDAS RECIENTEMENTE',
-                  style: GoogleFonts.bebasNeue(
-                    fontSize: 18, letterSpacing: 3,
-                    color: AppTheme.goldWhite,
                   ),
                 ),
-              ),
-            ),
 
-            // ── Scroll horizontal prendas ──────────────────────
-            SliverToBoxAdapter(
-              child: SizedBox(
-                height: 160,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  itemCount: PrendasData.prendas.length > 5
-                      ? 5
-                      : PrendasData.prendas.length,
-                  itemBuilder: (_, i) {
-                    final p = PrendasData.prendas[i];
-                    return _MiniPrenda(prenda: p);
-                  },
+                // ── Stats ──────────────────────────────────────────
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+                    child: Row(
+                      children: [
+                        _StatCard(
+                          valor: '${prendas.length}',
+                          label: 'Prendas',
+                          icon: Icons.checkroom_outlined,
+                          color: AppTheme.blue,
+                        ),
+                        const SizedBox(width: 12),
+                        _StatCard(
+                          valor: '${state.favoritos.length}',
+                          label: 'Favoritos',
+                          icon: Icons.favorite_outline,
+                          color: AppTheme.red,
+                        ),
+                        const SizedBox(width: 12),
+                        _StatCard(
+                          valor: state.talla.isEmpty ? '-' : state.talla,
+                          label: 'Mi talla',
+                          icon: Icons.straighten_outlined,
+                          color: AppTheme.blue,
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-            ),
 
-            const SliverToBoxAdapter(child: SizedBox(height: 32)),
-          ],
-        ),
-      ),
+                // ── Calendario semanal título ──────────────────────
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 28, 24, 12),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.calendar_today_outlined,
+                            color: AppTheme.blue, size: 16),
+                        const SizedBox(width: 8),
+                        Text('ESTA SEMANA',
+                          style: GoogleFonts.bebasNeue(
+                            fontSize: 18, letterSpacing: 3,
+                            color: AppTheme.textColor(context),
+                          ),
+                        ),
+                        const Spacer(),
+                        GestureDetector(
+                          onTap: widget.onIrACalendario,
+                          child: Text('Ver todo',
+                            style: GoogleFonts.dmSans(
+                              color: AppTheme.blue,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // ── Calendario semanal ─────────────────────────────
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: GestureDetector(
+                      onTap: widget.onIrACalendario,
+                      child: const _CalendarioSemanal(),
+                    ),
+                  ),
+                ),
+
+                // ── Look del día título ────────────────────────────
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 28, 24, 12),
+                    child: Row(
+                      children: [
+                        Text('LOOK DEL DÍA',
+                          style: GoogleFonts.bebasNeue(
+                            fontSize: 18, letterSpacing: 3,
+                            color: AppTheme.textColor(context),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          width: 6, height: 6,
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle, color: AppTheme.blue,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // ── Look del día tarjeta ───────────────────────────
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: _LookDelDia(prendas: prendas),
+                  ),
+                ),
+
+                // ── Añadidas recientemente título ──────────────────
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 28, 24, 12),
+                    child: Text('AÑADIDAS RECIENTEMENTE',
+                      style: GoogleFonts.bebasNeue(
+                        fontSize: 18, letterSpacing: 3,
+                        color: AppTheme.textColor(context),
+                      ),
+                    ),
+                  ),
+                ),
+
+                // ── Scroll horizontal prendas ──────────────────────
+                SliverToBoxAdapter(
+                  child: SizedBox(
+                    height: 160,
+                    child: prendas.isEmpty
+                        ? Center(
+                      child: Text(
+                        'Añade prendas para verlas aquí',
+                        style: GoogleFonts.dmSans(
+                          color: AppTheme.greyColor(context),
+                          fontSize: 13,
+                        ),
+                      ),
+                    )
+                        : ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      itemCount: prendas.length > 5 ? 5 : prendas.length,
+                      itemBuilder: (_, i) =>
+                          _MiniPrenda(prenda: prendas[i]),
+                    ),
+                  ),
+                ),
+
+                const SliverToBoxAdapter(child: SizedBox(height: 32)),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -250,9 +270,9 @@ class _CalendarioSemanal extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.surface,
+        color: AppTheme.surfaceColor(context),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.border, width: 0.5),
+        border: Border.all(color: AppTheme.borderColor(context), width: 0.5),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -269,7 +289,7 @@ class _CalendarioSemanal extends StatelessWidget {
                   _dias[i],
                   style: GoogleFonts.dmSans(
                     fontSize: 11,
-                    color: esHoy ? AppTheme.blue : AppTheme.grey,
+                    color: esHoy ? AppTheme.blue : AppTheme.greyColor(context),
                     fontWeight: esHoy ? FontWeight.w700 : FontWeight.w400,
                     letterSpacing: 0.5,
                   ),
@@ -282,15 +302,19 @@ class _CalendarioSemanal extends StatelessWidget {
                     color: esHoy ? AppTheme.blue : Colors.transparent,
                     border: esHoy
                         ? null
-                        : Border.all(color: AppTheme.border, width: 0.5),
+                        : Border.all(
+                        color: AppTheme.borderColor(context), width: 0.5),
                   ),
                   child: Center(
                     child: Text(
                       '${dia.day}',
                       style: GoogleFonts.dmSans(
                         fontSize: 13,
-                        color: esHoy ? AppTheme.white : AppTheme.greyLight,
-                        fontWeight: esHoy ? FontWeight.w700 : FontWeight.w400,
+                        color: esHoy
+                            ? AppTheme.white
+                            : AppTheme.textColor(context),
+                        fontWeight:
+                        esHoy ? FontWeight.w700 : FontWeight.w400,
                       ),
                     ),
                   ),
@@ -332,7 +356,7 @@ class _StatCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: AppTheme.surface,
+          color: AppTheme.surfaceColor(context),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: color.withOpacity(0.3), width: 0.5),
         ),
@@ -348,7 +372,9 @@ class _StatCard extends StatelessWidget {
             ),
             Text(label,
               style: GoogleFonts.dmSans(
-                fontSize: 10, color: AppTheme.grey, letterSpacing: 0.5,
+                fontSize: 10,
+                color: AppTheme.greyColor(context),
+                letterSpacing: 0.5,
               ),
             ),
           ],
@@ -360,39 +386,42 @@ class _StatCard extends StatelessWidget {
 
 // ── Look del día ──────────────────────────────────────────────────────────
 class _LookDelDia extends StatelessWidget {
-  const _LookDelDia();
+  final List<Prenda> prendas;
+  const _LookDelDia({required this.prendas});
 
   @override
   Widget build(BuildContext context) {
-    final prenda = PrendasData.prendas.isNotEmpty
-        ? PrendasData.prendas[DateTime.now().day % PrendasData.prendas.length]
+    final prenda = prendas.isNotEmpty
+        ? prendas[DateTime.now().day % prendas.length]
         : null;
 
     return GestureDetector(
       onTap: prenda != null
-          ? () => Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => PrendaDetailScreen(prenda: prenda),
-        ),
-      )
+          ? () => Navigator.push(context,
+          MaterialPageRoute(
+              builder: (_) => PrendaDetailScreen(prenda: prenda)))
           : null,
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppTheme.surface,
+          color: AppTheme.surfaceColor(context),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppTheme.border, width: 0.5),
+          border: Border.all(
+              color: AppTheme.borderColor(context), width: 0.5),
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [AppTheme.blue.withOpacity(0.08), AppTheme.surface],
+            colors: [
+              AppTheme.blue.withOpacity(0.08),
+              AppTheme.surfaceColor(context),
+            ],
           ),
         ),
         child: prenda == null
             ? Center(
           child: Text('Añade prendas para ver tu look del día',
-            style: GoogleFonts.dmSans(color: AppTheme.grey, fontSize: 13),
+            style: GoogleFonts.dmSans(
+                color: AppTheme.greyColor(context), fontSize: 13),
           ),
         )
             : Row(
@@ -400,19 +429,35 @@ class _LookDelDia extends StatelessWidget {
             ClipRRect(
               borderRadius: BorderRadius.circular(10),
               child: prenda.imagenUrl != null
-                  ? Image.asset(
+                  ? Image.network(
                 prenda.imagenUrl!,
                 width: 70, height: 70,
                 fit: BoxFit.cover,
+                loadingBuilder: (ctx, child, progress) {
+                  if (progress == null) return child;
+                  return Container(
+                    width: 70, height: 70,
+                    color: AppTheme.ash2Color(context),
+                    child: const Center(
+                      child: CircularProgressIndicator(
+                        color: AppTheme.blue, strokeWidth: 2,
+                      ),
+                    ),
+                  );
+                },
+                errorBuilder: (_, __, ___) => Container(
+                  width: 70, height: 70,
+                  color: AppTheme.ash2Color(context),
+                  child: Icon(Icons.checkroom,
+                      color: AppTheme.greyColor(context),
+                      size: 36),
+                ),
               )
                   : Container(
                 width: 70, height: 70,
-                color: AppTheme.ash2,
-                child: const Icon(
-                  Icons.checkroom,
-                  color: AppTheme.goldWhite,
-                  size: 36,
-                ),
+                color: AppTheme.ash2Color(context),
+                child: Icon(Icons.checkroom,
+                    color: AppTheme.greyColor(context), size: 36),
               ),
             ),
             const SizedBox(width: 16),
@@ -422,13 +467,14 @@ class _LookDelDia extends StatelessWidget {
                 children: [
                   Text('Sugerencia del día',
                     style: GoogleFonts.dmSans(
-                      color: AppTheme.grey, fontSize: 11, letterSpacing: 1,
+                      color: AppTheme.greyColor(context),
+                      fontSize: 11, letterSpacing: 1,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(prenda.nombre,
                     style: GoogleFonts.dmSans(
-                      color: AppTheme.white,
+                      color: AppTheme.textColor(context),
                       fontSize: 16, fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -441,7 +487,8 @@ class _LookDelDia extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, color: AppTheme.grey),
+            Icon(Icons.chevron_right,
+                color: AppTheme.greyColor(context)),
           ],
         ),
       ),
@@ -467,9 +514,10 @@ class _MiniPrenda extends StatelessWidget {
         width: 110,
         margin: const EdgeInsets.only(right: 12),
         decoration: BoxDecoration(
-          color: AppTheme.surface,
+          color: AppTheme.surfaceColor(context),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppTheme.border, width: 0.5),
+          border: Border.all(
+              color: AppTheme.borderColor(context), width: 0.5),
         ),
         child: Column(
           children: [
@@ -479,19 +527,34 @@ class _MiniPrenda extends StatelessWidget {
                   top: Radius.circular(12),
                 ),
                 child: prenda.imagenUrl != null
-                    ? Image.asset(
+                    ? Image.network(
                   prenda.imagenUrl!,
                   fit: BoxFit.cover,
                   width: double.infinity,
+                  loadingBuilder: (ctx, child, progress) {
+                    if (progress == null) return child;
+                    return Container(
+                      color: AppTheme.ash2Color(context),
+                      child: const Center(
+                        child: CircularProgressIndicator(
+                          color: AppTheme.blue, strokeWidth: 2,
+                        ),
+                      ),
+                    );
+                  },
+                  errorBuilder: (_, __, ___) => Container(
+                    color: AppTheme.ash2Color(context),
+                    child: Center(
+                      child: Icon(Icons.checkroom_outlined,
+                          color: AppTheme.greyColor(context), size: 32),
+                    ),
+                  ),
                 )
                     : Container(
-                  color: AppTheme.ash2,
-                  child: const Center(
-                    child: Icon(
-                      Icons.checkroom_outlined,
-                      color: AppTheme.goldWhite,
-                      size: 32,
-                    ),
+                  color: AppTheme.ash2Color(context),
+                  child: Center(
+                    child: Icon(Icons.checkroom_outlined,
+                        color: AppTheme.greyColor(context), size: 32),
                   ),
                 ),
               ),
@@ -501,7 +564,8 @@ class _MiniPrenda extends StatelessWidget {
               child: Text(
                 prenda.nombre,
                 style: GoogleFonts.dmSans(
-                  fontSize: 10, color: AppTheme.white,
+                  fontSize: 10,
+                  color: AppTheme.textColor(context),
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,

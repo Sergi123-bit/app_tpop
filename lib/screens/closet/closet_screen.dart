@@ -46,7 +46,7 @@ class _ClosetScreenState extends State<ClosetScreen> {
         }).toList();
 
         return Scaffold(
-          backgroundColor: AppTheme.black,
+          backgroundColor: AppTheme.bgColor(context),
           body: SafeArea(
             child: Column(
               children: [
@@ -61,7 +61,7 @@ class _ClosetScreenState extends State<ClosetScreen> {
                         style: GoogleFonts.bebasNeue(
                           fontSize: 28,
                           letterSpacing: 4,
-                          color: AppTheme.white,
+                          color: AppTheme.textColor(context),
                         ),
                       ),
                       const Spacer(),
@@ -96,16 +96,16 @@ class _ClosetScreenState extends State<ClosetScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: TextField(
                     controller: _searchCtrl,
-                    style: const TextStyle(color: AppTheme.white),
+                    style: TextStyle(color: AppTheme.textColor(context)),
                     onChanged: (v) => setState(() => _busqueda = v),
                     decoration: InputDecoration(
                       hintText: 'Buscar por nombre, tipo, color...',
-                      prefixIcon: const Icon(
-                          Icons.search, color: AppTheme.grey, size: 20),
+                      prefixIcon: Icon(Icons.search,
+                          color: AppTheme.greyColor(context), size: 20),
                       suffixIcon: _busqueda.isNotEmpty
                           ? IconButton(
-                        icon: const Icon(Icons.close,
-                            color: AppTheme.grey, size: 18),
+                        icon: Icon(Icons.close,
+                            color: AppTheme.greyColor(context), size: 18),
                         onPressed: () {
                           _searchCtrl.clear();
                           setState(() => _busqueda = '');
@@ -131,8 +131,7 @@ class _ClosetScreenState extends State<ClosetScreen> {
                         onTap: () => setState(() => _categoria = null),
                       ),
                       ...Categorias.todas.map((c) => _ChipCategoria(
-                        label:
-                        '${Categorias.iconos[c]} ${Categorias.labels[c]}',
+                        label: '${Categorias.iconos[c]} ${Categorias.labels[c]}',
                         selected: _categoria == c,
                         onTap: () => setState(() =>
                         _categoria = _categoria == c ? null : c),
@@ -151,8 +150,6 @@ class _ClosetScreenState extends State<ClosetScreen> {
                     ),
                   )
                 else
-
-                // ── Grid de prendas ───────────────────────────────────
                   Expanded(
                     child: prendas.isEmpty
                         ? _ArmarioVacio(
@@ -160,8 +157,7 @@ class _ClosetScreenState extends State<ClosetScreen> {
                       _busqueda.isNotEmpty || _categoria != null,
                     )
                         : GridView.builder(
-                      padding:
-                      const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                      padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
                       gridDelegate:
                       const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 2,
@@ -209,15 +205,14 @@ class _ChipCategoria extends StatelessWidget {
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(right: 8),
-        padding:
-        const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
         decoration: BoxDecoration(
           color: selected
-              ? AppTheme.blue.withOpacity(0.2)
-              : AppTheme.surface,
+              ? AppTheme.blue.withOpacity(0.15)
+              : AppTheme.surfaceColor(context),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: selected ? AppTheme.blue : AppTheme.border,
+            color: selected ? AppTheme.blue : AppTheme.borderColor(context),
             width: selected ? 1 : 0.5,
           ),
         ),
@@ -225,9 +220,8 @@ class _ChipCategoria extends StatelessWidget {
           label,
           style: GoogleFonts.dmSans(
             fontSize: 12,
-            color: selected ? AppTheme.blue : AppTheme.greyLight,
-            fontWeight:
-            selected ? FontWeight.w600 : FontWeight.w400,
+            color: selected ? AppTheme.blue : AppTheme.greyLightColor(context),
+            fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
           ),
         ),
       ),
@@ -253,9 +247,10 @@ class _TarjetaPrenda extends StatelessWidget {
       ),
       child: Container(
         decoration: BoxDecoration(
-          color: AppTheme.surface,
+          color: AppTheme.surfaceColor(context),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppTheme.border, width: 0.5),
+          border: Border.all(
+              color: AppTheme.borderColor(context), width: 0.5),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -263,18 +258,45 @@ class _TarjetaPrenda extends StatelessWidget {
             Expanded(
               child: Stack(
                 children: [
+
+                  // ── Imagen ──────────────────────────────────────
                   ClipRRect(
                     borderRadius: const BorderRadius.vertical(
                         top: Radius.circular(14)),
                     child: prenda.imagenUrl != null
-                        ? Image.asset(
+                        ? Image.network(
                       prenda.imagenUrl!,
                       fit: BoxFit.cover,
                       width: double.infinity,
                       height: double.infinity,
+                      loadingBuilder: (ctx, child, progress) {
+                        if (progress == null) return child;
+                        return Container(
+                          color: AppTheme.ash2Color(context),
+                          width: double.infinity,
+                          height: double.infinity,
+                          child: const Center(
+                            child: CircularProgressIndicator(
+                              color: AppTheme.blue,
+                              strokeWidth: 2,
+                            ),
+                          ),
+                        );
+                      },
+                      errorBuilder: (_, __, ___) => Container(
+                        color: AppTheme.ash2Color(context),
+                        width: double.infinity,
+                        height: double.infinity,
+                        child: Center(
+                          child: Text(
+                            Categorias.iconos[prenda.categoria] ?? '👕',
+                            style: const TextStyle(fontSize: 48),
+                          ),
+                        ),
+                      ),
                     )
                         : Container(
-                      color: AppTheme.ash2,
+                      color: AppTheme.ash2Color(context),
                       width: double.infinity,
                       height: double.infinity,
                       child: Center(
@@ -285,7 +307,8 @@ class _TarjetaPrenda extends StatelessWidget {
                       ),
                     ),
                   ),
-                  // favorito
+
+                  // ── Botón favorito ──────────────────────────────
                   Positioned(
                     top: 8, right: 8,
                     child: GestureDetector(
@@ -293,21 +316,19 @@ class _TarjetaPrenda extends StatelessWidget {
                       child: Container(
                         width: 32, height: 32,
                         decoration: BoxDecoration(
-                          color: AppTheme.black.withOpacity(0.6),
+                          color: Colors.black.withOpacity(0.35),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
-                          esFav
-                              ? Icons.favorite
-                              : Icons.favorite_outline,
-                          color:
-                          esFav ? AppTheme.red : AppTheme.white,
+                          esFav ? Icons.favorite : Icons.favorite_outline,
+                          color: esFav ? AppTheme.red : AppTheme.white,
                           size: 16,
                         ),
                       ),
                     ),
                   ),
-                  // badge categoría
+
+                  // ── Badge categoría ─────────────────────────────
                   Positioned(
                     top: 8, left: 8,
                     child: Container(
@@ -330,6 +351,8 @@ class _TarjetaPrenda extends StatelessWidget {
                 ],
               ),
             ),
+
+            // ── Info ────────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.all(10),
               child: Column(
@@ -338,7 +361,7 @@ class _TarjetaPrenda extends StatelessWidget {
                   Text(
                     prenda.nombre,
                     style: GoogleFonts.dmSans(
-                      color: AppTheme.white,
+                      color: AppTheme.textColor(context),
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                     ),
@@ -350,19 +373,20 @@ class _TarjetaPrenda extends StatelessWidget {
                     children: [
                       Text(prenda.marca,
                           style: GoogleFonts.dmSans(
-                              color: AppTheme.grey, fontSize: 11)),
+                              color: AppTheme.greyColor(context),
+                              fontSize: 11)),
                       const Spacer(),
                       Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: AppTheme.ash2,
+                          color: AppTheme.surface2Color(context),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
                           prenda.talla,
                           style: GoogleFonts.dmSans(
-                            color: AppTheme.goldWhite,
+                            color: AppTheme.goldColor(context),
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
                           ),
@@ -396,7 +420,7 @@ class _ArmarioVacio extends StatelessWidget {
           Text(
             tieneFiltro ? 'Sin resultados' : 'Tu armario está vacío',
             style: GoogleFonts.dmSans(
-                color: AppTheme.greyLight, fontSize: 16),
+                color: AppTheme.greyLightColor(context), fontSize: 16),
           ),
           const SizedBox(height: 8),
           Text(
@@ -404,7 +428,7 @@ class _ArmarioVacio extends StatelessWidget {
                 ? 'Prueba con otro filtro'
                 : 'Toca + para añadir tu primera prenda',
             style: GoogleFonts.dmSans(
-                color: AppTheme.grey, fontSize: 13),
+                color: AppTheme.greyColor(context), fontSize: 13),
           ),
         ],
       ),

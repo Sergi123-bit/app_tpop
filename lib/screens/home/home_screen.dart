@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
-import '../../services/app_state.dart';
 import '../../theme/app_theme.dart';
 import '../closet/closet_screen.dart';
 import '../outfits/outfits_screen.dart';
@@ -9,8 +7,6 @@ import '../profile/profile_screen.dart';
 import 'dashboard_screen.dart';
 import '../calendar/calendar_screen.dart';
 
-// Contenedor principal con navegación inferior.
-// Cada pestaña mantiene su estado gracias a IndexedStack.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -21,25 +17,31 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _tab = 0;
 
-  static const List<Widget> _screens = [
-    DashboardScreen(),  // inicio
-    ClosetScreen(),     // mi ropa
-    OutfitsScreen(),    // conjuntos
-    CalendarScreen(),   // búsqueda
-    ProfileScreen(),    // perfil
-  ];
+  // ✅ Callback que permite a DashboardScreen cambiar de pestaña
+  void _cambiarTab(int index) {
+    setState(() => _tab = index);
+  }
 
   @override
   Widget build(BuildContext context) {
+    // ✅ Pasamos el callback al DashboardScreen
+    final screens = [
+      DashboardScreen(onIrACalendario: () => _cambiarTab(3)),
+      const ClosetScreen(),
+      const OutfitsScreen(),
+      const CalendarScreen(),
+      const ProfileScreen(),
+    ];
+
     return Scaffold(
       backgroundColor: AppTheme.black,
       body: IndexedStack(
         index: _tab,
-        children: _screens,
+        children: screens,
       ),
       bottomNavigationBar: _BarraNav(
         currentIndex: _tab,
-        onTap: (i) => setState(() => _tab = i),
+        onTap: _cambiarTab,
       ),
     );
   }
@@ -141,7 +143,6 @@ class _TabItem extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // punto indicador arriba si está seleccionado
             AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               width: sel ? 20 : 0,

@@ -4,7 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'services/app_state.dart';
 import 'theme/app_theme.dart';
-import 'screens/auth/login_screen.dart';
+import 'screens/auth/auth_screens.dart';
 import 'screens/main_shell.dart';
 
 void main() async {
@@ -25,10 +25,16 @@ class TPopApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Escucha el tema en tiempo real
+    final temaOscuro = context.watch<AppState>().temaOscuro;
+
     return MaterialApp(
       title: 'T-POP',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.theme,
+      // ✅ Cambia entre claro y oscuro según el estado
+      theme:     AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: temaOscuro ? ThemeMode.dark : ThemeMode.light,
       initialRoute: '/',
       routes: {
         '/':         (_) => const _AuthGate(),

@@ -1,6 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:uuid/uuid.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../theme/app_theme.dart';
 import '../../models/models.dart';
 import '../../services/firestore_service.dart';
@@ -18,10 +20,11 @@ class _AddPrendaScreenState extends State<AddPrendaScreen> {
   final _marcaCtrl  = TextEditingController();
   final _colorCtrl  = TextEditingController();
 
-  String _tipo      = 'Camiseta';
-  String _categoria = 'superior';
-  String _talla     = 'M';
-  bool   _guardando = false;
+  String  _tipo      = 'Camiseta';
+  String  _categoria = 'superior';
+  String  _talla     = 'M';
+  bool    _guardando = false;
+  File?   _foto;                          // ✅ foto seleccionada
 
   static const _tipos = [
     'Camiseta', 'Camisa', 'Polo', 'Sudadera', 'Chaqueta', 'Abrigo',
@@ -46,6 +49,77 @@ class _AddPrendaScreenState extends State<AddPrendaScreen> {
     return 'accesorio';
   }
 
+  // ✅ Seleccionar foto desde galería o cámara
+  Future<void> _seleccionarFoto() async {
+    final picker = ImagePicker();
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppTheme.ash,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Center(
+              child: Container(
+                width: 40, height: 4,
+                decoration: BoxDecoration(
+                  color: AppTheme.grey,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text('Seleccionar foto',
+              style: GoogleFonts.bebasNeue(
+                fontSize: 20, letterSpacing: 3, color: AppTheme.white,
+              ),
+            ),
+            const SizedBox(height: 20),
+            // opción cámara
+            ListTile(
+              leading: const Icon(Icons.camera_alt_outlined, color: AppTheme.blue),
+              title: Text('Hacer foto',
+                style: GoogleFonts.dmSans(color: AppTheme.white, fontSize: 15),
+              ),
+              onTap: () async {
+                Navigator.pop(context);
+                final picked = await picker.pickImage(
+                  source: ImageSource.camera,
+                  imageQuality: 80,
+                );
+                if (picked != null) {
+                  setState(() => _foto = File(picked.path));
+                }
+              },
+            ),
+            // opción galería
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined, color: AppTheme.blue),
+              title: Text('Elegir de la galería',
+                style: GoogleFonts.dmSans(color: AppTheme.white, fontSize: 15),
+              ),
+              onTap: () async {
+                Navigator.pop(context);
+                final picked = await picker.pickImage(
+                  source: ImageSource.gallery,
+                  imageQuality: 80,
+                );
+                if (picked != null) {
+                  setState(() => _foto = File(picked.path));
+                }
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _nombreCtrl.dispose();
@@ -58,6 +132,7 @@ class _AddPrendaScreenState extends State<AddPrendaScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _guardando = true);
 
+    // La imagenUrl por ahora es null — cuando añadamos Storage subiremos la foto
     final nueva = Prenda(
       id:        const Uuid().v4(),
       nombre:    _nombreCtrl.text.trim(),
@@ -66,6 +141,7 @@ class _AddPrendaScreenState extends State<AddPrendaScreen> {
       color:     _colorCtrl.text.trim(),
       talla:     _talla,
       marca:     _marcaCtrl.text.trim(),
+      imagenUrl: null,
     );
 
     try {
@@ -79,8 +155,7 @@ class _AddPrendaScreenState extends State<AddPrendaScreen> {
               children: [
                 const Icon(Icons.check_circle, color: AppTheme.blue, size: 18),
                 const SizedBox(width: 8),
-                Text(
-                  'Prenda añadida correctamente',
+                Text('Prenda añadida correctamente',
                   style: GoogleFonts.dmSans(color: AppTheme.white),
                 ),
               ],
@@ -95,7 +170,6 @@ class _AddPrendaScreenState extends State<AddPrendaScreen> {
         );
       }
     }
-
     setState(() => _guardando = false);
   }
 
@@ -115,16 +189,11 @@ class _AddPrendaScreenState extends State<AddPrendaScreen> {
             child: _guardando
                 ? const SizedBox(
               width: 18, height: 18,
-              child: CircularProgressIndicator(
-                strokeWidth: 2, color: AppTheme.blue,
-              ),
+              child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.blue),
             )
-                : Text(
-              'GUARDAR',
+                : Text('GUARDAR',
               style: GoogleFonts.dmSans(
-                color: AppTheme.blue,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 1,
+                color: AppTheme.blue, fontWeight: FontWeight.w700, letterSpacing: 1,
               ),
             ),
           ),
@@ -140,25 +209,35 @@ class _AddPrendaScreenState extends State<AddPrendaScreen> {
 
               // ── Foto ──────────────────────────────────────────
               Center(
-                child: Container(
-                  width: 140, height: 180,
-                  decoration: BoxDecoration(
-                    color: AppTheme.surface,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: AppTheme.blue.withOpacity(0.4), width: 1,
+                child: GestureDetector(
+                  onTap: _seleccionarFoto,   // ✅ abre selector
+                  child: Container(
+                    width: 140, height: 180,
+                    decoration: BoxDecoration(
+                      color: AppTheme.surface,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: AppTheme.blue.withOpacity(0.4), width: 1,
+                      ),
                     ),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.add_photo_alternate_outlined,
-                          color: AppTheme.blue, size: 40),
-                      const SizedBox(height: 8),
-                      Text('Añadir foto',
-                          style: GoogleFonts.dmSans(
-                              color: AppTheme.grey, fontSize: 12)),
-                    ],
+                    child: _foto != null
+                    // ✅ muestra la foto seleccionada
+                        ? ClipRRect(
+                      borderRadius: BorderRadius.circular(13),
+                      child: Image.file(_foto!, fit: BoxFit.cover),
+                    )
+                    // placeholder cuando no hay foto
+                        : Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.add_photo_alternate_outlined,
+                            color: AppTheme.blue, size: 40),
+                        const SizedBox(height: 8),
+                        Text('Añadir foto',
+                            style: GoogleFonts.dmSans(
+                                color: AppTheme.grey, fontSize: 12)),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -172,9 +251,9 @@ class _AddPrendaScreenState extends State<AddPrendaScreen> {
                 controller: _nombreCtrl,
                 style: const TextStyle(color: AppTheme.white),
                 decoration: const InputDecoration(
-                    hintText: 'Ej: Camiseta Selección Española'),
-                validator: (v) =>
-                v!.isEmpty ? 'El nombre es obligatorio' : null,
+                  hintText: 'Ej: Camiseta Selección Española',
+                ),
+                validator: (v) => v!.isEmpty ? 'El nombre es obligatorio' : null,
               ),
 
               const SizedBox(height: 20),
@@ -203,28 +282,26 @@ class _AddPrendaScreenState extends State<AddPrendaScreen> {
               const SizedBox(height: 8),
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 14),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 decoration: BoxDecoration(
                   color: AppTheme.surface2,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                      color: AppTheme.blue.withOpacity(0.4), width: 0.5),
+                    color: AppTheme.blue.withOpacity(0.4), width: 0.5,
+                  ),
                 ),
                 child: Row(
                   children: [
                     Text(
                       '${Categorias.iconos[_categoria]}  ${Categorias.labels[_categoria]}',
                       style: GoogleFonts.dmSans(
-                        color: AppTheme.blue,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
+                        color: AppTheme.blue, fontSize: 14, fontWeight: FontWeight.w500,
                       ),
                     ),
                     const Spacer(),
                     Text('Auto',
-                        style: GoogleFonts.dmSans(
-                            color: AppTheme.grey, fontSize: 11)),
+                      style: GoogleFonts.dmSans(color: AppTheme.grey, fontSize: 11),
+                    ),
                   ],
                 ),
               ),
@@ -244,8 +321,7 @@ class _AddPrendaScreenState extends State<AddPrendaScreen> {
                           controller: _colorCtrl,
                           style: const TextStyle(color: AppTheme.white),
                           decoration: const InputDecoration(hintText: 'Ej: Rojo'),
-                          validator: (v) =>
-                          v!.isEmpty ? 'Obligatorio' : null,
+                          validator: (v) => v!.isEmpty ? 'Obligatorio' : null,
                         ),
                       ],
                     ),
@@ -261,8 +337,7 @@ class _AddPrendaScreenState extends State<AddPrendaScreen> {
                           controller: _marcaCtrl,
                           style: const TextStyle(color: AppTheme.white),
                           decoration: const InputDecoration(hintText: 'Ej: Nike'),
-                          validator: (v) =>
-                          v!.isEmpty ? 'Obligatorio' : null,
+                          validator: (v) => v!.isEmpty ? 'Obligatorio' : null,
                         ),
                       ],
                     ),
@@ -284,7 +359,8 @@ class _AddPrendaScreenState extends State<AddPrendaScreen> {
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 150),
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 8),
+                        horizontal: 16, vertical: 8,
+                      ),
                       decoration: BoxDecoration(
                         color: sel
                             ? AppTheme.blue.withOpacity(0.2)
@@ -300,9 +376,7 @@ class _AddPrendaScreenState extends State<AddPrendaScreen> {
                         style: GoogleFonts.dmSans(
                           color: sel ? AppTheme.blue : AppTheme.greyLight,
                           fontSize: 13,
-                          fontWeight: sel
-                              ? FontWeight.w700
-                              : FontWeight.w400,
+                          fontWeight: sel ? FontWeight.w700 : FontWeight.w400,
                         ),
                       ),
                     ),
@@ -343,10 +417,8 @@ class _Etiqueta extends StatelessWidget {
     return Text(
       text,
       style: GoogleFonts.dmSans(
-        fontSize: 11,
-        letterSpacing: 2,
-        color: AppTheme.grey,
-        fontWeight: FontWeight.w600,
+        fontSize: 11, letterSpacing: 2,
+        color: AppTheme.grey, fontWeight: FontWeight.w600,
       ),
     );
   }

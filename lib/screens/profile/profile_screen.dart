@@ -4,9 +4,8 @@ import 'package:provider/provider.dart';
 import '../../services/app_state.dart';
 import '../../theme/app_theme.dart';
 import '../../models/models.dart';
+import 'questionnaire_screen.dart';
 
-// Pantalla de perfil — muestra datos del usuario,
-// estadísticas, favoritos y opciones de edición.
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
@@ -37,20 +36,14 @@ class ProfileScreen extends StatelessWidget {
                 ),
                 child: Column(
                   children: [
-
-                    // avatar con inicial o foto
                     Stack(
                       children: [
                         Container(
-                          width: 90,
-                          height: 90,
+                          width: 90, height: 90,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: AppTheme.surface,
-                            border: Border.all(
-                              color: AppTheme.blue,
-                              width: 2,
-                            ),
+                            border: Border.all(color: AppTheme.blue, width: 2),
                             boxShadow: [
                               BoxShadow(
                                 color: AppTheme.blue.withOpacity(0.3),
@@ -71,34 +64,23 @@ class ProfileScreen extends StatelessWidget {
                                   ? state.nombre[0].toUpperCase()
                                   : '?',
                               style: GoogleFonts.bebasNeue(
-                                fontSize: 40,
-                                color: AppTheme.white,
+                                fontSize: 40, color: AppTheme.white,
                               ),
                             ),
                           ),
                         ),
-                        // botón editar foto
                         Positioned(
-                          bottom: 0,
-                          right: 0,
+                          bottom: 0, right: 0,
                           child: GestureDetector(
                             onTap: () => _editarPerfil(context, state),
                             child: Container(
-                              width: 28,
-                              height: 28,
+                              width: 28, height: 28,
                               decoration: BoxDecoration(
                                 color: AppTheme.blue,
                                 shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: AppTheme.black,
-                                  width: 2,
-                                ),
+                                border: Border.all(color: AppTheme.black, width: 2),
                               ),
-                              child: const Icon(
-                                Icons.edit,
-                                color: AppTheme.white,
-                                size: 14,
-                              ),
+                              child: const Icon(Icons.edit, color: AppTheme.white, size: 14),
                             ),
                           ),
                         ),
@@ -107,36 +89,20 @@ class ProfileScreen extends StatelessWidget {
 
                     const SizedBox(height: 14),
 
-                    // nombre de usuario
                     Text(
                       state.nombre.isEmpty ? 'Usuario' : state.nombre,
                       style: GoogleFonts.bebasNeue(
-                        fontSize: 28,
-                        letterSpacing: 2,
-                        color: AppTheme.white,
+                        fontSize: 28, letterSpacing: 2, color: AppTheme.white,
                       ),
                     ),
-
-                    // username
                     Text(
-                      state.username.isEmpty
-                          ? ''
-                          : '@${state.username}',
-                      style: GoogleFonts.dmSans(
-                        color: AppTheme.grey,
-                        fontSize: 13,
-                      ),
+                      state.username.isEmpty ? '' : '@${state.username}',
+                      style: GoogleFonts.dmSans(color: AppTheme.grey, fontSize: 13),
                     ),
-
                     const SizedBox(height: 4),
-
-                    // email
                     Text(
                       state.email,
-                      style: GoogleFonts.dmSans(
-                        color: AppTheme.greyLight,
-                        fontSize: 12,
-                      ),
+                      style: GoogleFonts.dmSans(color: AppTheme.greyLight, fontSize: 12),
                     ),
                   ],
                 ),
@@ -181,25 +147,18 @@ class ProfileScreen extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        const Icon(
-                          Icons.favorite,
-                          color: AppTheme.red,
-                          size: 16,
-                        ),
+                        const Icon(Icons.favorite, color: AppTheme.red, size: 16),
                         const SizedBox(width: 8),
                         Text(
                           'MIS FAVORITOS',
                           style: GoogleFonts.bebasNeue(
-                            fontSize: 18,
-                            letterSpacing: 3,
-                            color: AppTheme.white,
+                            fontSize: 18, letterSpacing: 3, color: AppTheme.white,
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 12),
 
-                    // lista de favoritos
                     if (state.favoritos.isEmpty)
                       Container(
                         width: double.infinity,
@@ -207,25 +166,15 @@ class ProfileScreen extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: AppTheme.surface,
                           borderRadius: BorderRadius.circular(14),
-                          border: Border.all(
-                            color: AppTheme.border,
-                            width: 0.5,
-                          ),
+                          border: Border.all(color: AppTheme.border, width: 0.5),
                         ),
                         child: Column(
                           children: [
-                            const Icon(
-                              Icons.favorite_outline,
-                              color: AppTheme.grey,
-                              size: 32,
-                            ),
+                            const Icon(Icons.favorite_outline, color: AppTheme.grey, size: 32),
                             const SizedBox(height: 8),
                             Text(
                               'Sin favoritos todavía',
-                              style: GoogleFonts.dmSans(
-                                color: AppTheme.grey,
-                                fontSize: 13,
-                              ),
+                              style: GoogleFonts.dmSans(color: AppTheme.grey, fontSize: 13),
                             ),
                           ],
                         ),
@@ -256,27 +205,90 @@ class ProfileScreen extends StatelessWidget {
                     Text(
                       'CUENTA',
                       style: GoogleFonts.dmSans(
-                        fontSize: 11,
-                        letterSpacing: 2,
-                        color: AppTheme.grey,
+                        fontSize: 11, letterSpacing: 2, color: AppTheme.grey,
                       ),
                     ),
                     const SizedBox(height: 12),
+
+                    // switch modo oscuro
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      decoration: BoxDecoration(
+                        color: AppTheme.surface,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppTheme.border, width: 0.5),
+                      ),
+                      child: SwitchListTile(
+                        title: Text(
+                          'Modo oscuro',
+                          style: GoogleFonts.dmSans(
+                            color: AppTheme.white, fontSize: 14,
+                          ),
+                        ),
+                        secondary: Icon(
+                          state.temaOscuro ? Icons.dark_mode : Icons.light_mode,
+                          color: AppTheme.blue, size: 20,
+                        ),
+                        value: state.temaOscuro,
+                        onChanged: (_) => context.read<AppState>().toggleTema(),
+                        activeColor: AppTheme.blue,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+
+                    _OpcionTile(
+                      icon: Icons.tune_outlined,
+                      label: 'Mis preferencias de estilo',
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const QuestionnaireScreen(),
+                        ),
+                      ),
+                    ),
+
                     _OpcionTile(
                       icon: Icons.person_outline,
                       label: 'Editar perfil',
                       onTap: () => _editarPerfil(context, state),
                     ),
+
+                    // ✅ Gestionar ropa — va a la pantalla del armario
                     _OpcionTile(
                       icon: Icons.checkroom_outlined,
                       label: 'Gestionar ropa',
-                      onTap: () {},
+                      onTap: () => Navigator.pushNamedAndRemoveUntil(
+                        context, '/home', (route) => false,
+                      ),
                     ),
+
+                    // ✅ Notificaciones — muestra estado actual
                     _OpcionTile(
                       icon: Icons.notifications_outlined,
                       label: 'Notificaciones',
-                      onTap: () {},
+                      onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          backgroundColor: AppTheme.surface,
+                          content: Row(
+                            children: [
+                              const Icon(
+                                Icons.notifications,
+                                color: AppTheme.blue,
+                                size: 18,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Las notificaciones están activadas',
+                                style: GoogleFonts.dmSans(color: AppTheme.white),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ),
+
                     _OpcionTile(
                       icon: Icons.logout,
                       label: 'Cerrar sesión',
@@ -298,12 +310,10 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  // modal para editar perfil
   void _editarPerfil(BuildContext context, AppState state) {
     final nombreCtrl   = TextEditingController(text: state.nombre);
     final usernameCtrl = TextEditingController(text: state.username);
     String tallaSelec  = state.talla.isEmpty ? 'M' : state.talla;
-
     final tallas = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 
     showModalBottomSheet(
@@ -323,8 +333,6 @@ class ProfileScreen extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-
-              // handle
               Center(
                 child: Container(
                   width: 40, height: 4,
@@ -334,45 +342,30 @@ class ProfileScreen extends StatelessWidget {
                   ),
                 ),
               ),
-
               const SizedBox(height: 20),
-
               Text(
                 'EDITAR PERFIL',
                 style: GoogleFonts.bebasNeue(
-                  fontSize: 22,
-                  letterSpacing: 3,
-                  color: AppTheme.white,
+                  fontSize: 22, letterSpacing: 3, color: AppTheme.white,
                 ),
               ),
-
               const SizedBox(height: 20),
-
-              // nombre
               TextField(
                 controller: nombreCtrl,
                 style: const TextStyle(color: AppTheme.white),
                 decoration: const InputDecoration(labelText: 'Nombre'),
               ),
-
               const SizedBox(height: 12),
-
-              // username
               TextField(
                 controller: usernameCtrl,
                 style: const TextStyle(color: AppTheme.white),
                 decoration: const InputDecoration(labelText: 'Username'),
               ),
-
               const SizedBox(height: 16),
-
-              // talla
               Text(
                 'TALLA',
                 style: GoogleFonts.dmSans(
-                  fontSize: 11,
-                  letterSpacing: 2,
-                  color: AppTheme.grey,
+                  fontSize: 11, letterSpacing: 2, color: AppTheme.grey,
                 ),
               ),
               const SizedBox(height: 8),
@@ -400,19 +393,14 @@ class ProfileScreen extends StatelessWidget {
                         t,
                         style: GoogleFonts.dmSans(
                           color: sel ? AppTheme.blue : AppTheme.greyLight,
-                          fontWeight: sel
-                              ? FontWeight.w700
-                              : FontWeight.w400,
+                          fontWeight: sel ? FontWeight.w700 : FontWeight.w400,
                         ),
                       ),
                     ),
                   );
                 }).toList(),
               ),
-
               const SizedBox(height: 20),
-
-              // guardar cambios
               ElevatedButton(
                 onPressed: () {
                   state.actualizarPerfil(
@@ -455,10 +443,7 @@ class _StatPerfil extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppTheme.surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: color.withOpacity(0.3),
-            width: 0.5,
-          ),
+          border: Border.all(color: color.withOpacity(0.3), width: 0.5),
         ),
         child: Column(
           children: [
@@ -466,18 +451,11 @@ class _StatPerfil extends StatelessWidget {
             const SizedBox(height: 6),
             Text(
               valor,
-              style: GoogleFonts.bebasNeue(
-                fontSize: 24,
-                color: color,
-                letterSpacing: 1,
-              ),
+              style: GoogleFonts.bebasNeue(fontSize: 24, color: color, letterSpacing: 1),
             ),
             Text(
               label,
-              style: GoogleFonts.dmSans(
-                fontSize: 10,
-                color: AppTheme.grey,
-              ),
+              style: GoogleFonts.dmSans(fontSize: 10, color: AppTheme.grey),
             ),
           ],
         ),
@@ -490,10 +468,7 @@ class _FavoritoTile extends StatelessWidget {
   final Prenda prenda;
   final VoidCallback onQuitar;
 
-  const _FavoritoTile({
-    required this.prenda,
-    required this.onQuitar,
-  });
+  const _FavoritoTile({required this.prenda, required this.onQuitar});
 
   @override
   Widget build(BuildContext context) {
@@ -519,28 +494,19 @@ class _FavoritoTile extends StatelessWidget {
                 Text(
                   prenda.nombre,
                   style: GoogleFonts.dmSans(
-                    color: AppTheme.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
+                    color: AppTheme.white, fontSize: 14, fontWeight: FontWeight.w500,
                   ),
                 ),
                 Text(
                   prenda.marca,
-                  style: GoogleFonts.dmSans(
-                    color: AppTheme.grey,
-                    fontSize: 12,
-                  ),
+                  style: GoogleFonts.dmSans(color: AppTheme.grey, fontSize: 12),
                 ),
               ],
             ),
           ),
           GestureDetector(
             onTap: onQuitar,
-            child: const Icon(
-              Icons.favorite,
-              color: AppTheme.red,
-              size: 20,
-            ),
+            child: const Icon(Icons.favorite, color: AppTheme.red, size: 20),
           ),
         ],
       ),
@@ -568,9 +534,7 @@ class _OpcionTile extends StatelessWidget {
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.symmetric(
-          horizontal: 16, vertical: 14,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
           color: AppTheme.surface,
           borderRadius: BorderRadius.circular(12),
@@ -582,17 +546,10 @@ class _OpcionTile extends StatelessWidget {
             const SizedBox(width: 14),
             Text(
               label,
-              style: GoogleFonts.dmSans(
-                color: c,
-                fontSize: 14,
-              ),
+              style: GoogleFonts.dmSans(color: c, fontSize: 14),
             ),
             const Spacer(),
-            Icon(
-              Icons.chevron_right,
-              color: AppTheme.grey,
-              size: 18,
-            ),
+            Icon(Icons.chevron_right, color: AppTheme.grey, size: 18),
           ],
         ),
       ),

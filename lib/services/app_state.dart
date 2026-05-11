@@ -10,25 +10,32 @@ class AppState extends ChangeNotifier {
   final _db   = FirebaseFirestore.instance;
   final _fs   = FirestoreService();
 
-  bool    _loggedIn = false;
-  String  _nombre   = '';
-  String  _email    = '';
-  String  _username = '';
-  String  _talla    = '';
+  bool    _loggedIn   = false;
+  String  _nombre     = '';
+  String  _email      = '';
+  String  _username   = '';
+  String  _talla      = '';
   String? _fotoUrl;
-  bool    _loading  = false;
+  bool    _loading    = false;
   String? _error;
+  bool    _temaOscuro = true;
   final List<String> _favoritos = [];
 
-  bool         get isLoggedIn => _loggedIn;
-  String       get nombre     => _nombre;
-  String       get email      => _email;
-  String       get username   => _username;
-  String       get talla      => _talla;
-  String?      get fotoUrl    => _fotoUrl;
-  bool         get loading    => _loading;
-  String?      get error      => _error;
-  List<String> get favoritos  => List.unmodifiable(_favoritos);
+  bool         get isLoggedIn  => _loggedIn;
+  String       get nombre      => _nombre;
+  String       get email       => _email;
+  String       get username    => _username;
+  String       get talla       => _talla;
+  String?      get fotoUrl     => _fotoUrl;
+  bool         get loading     => _loading;
+  String?      get error       => _error;
+  bool         get temaOscuro  => _temaOscuro;
+  List<String> get favoritos   => List.unmodifiable(_favoritos);
+
+  void toggleTema() {
+    _temaOscuro = !_temaOscuro;
+    notifyListeners();
+  }
 
   AppState() {
     _auth.authStateChanges().listen((user) async {
@@ -36,7 +43,6 @@ class AppState extends ChangeNotifier {
         _loggedIn = true;
         _email    = user.email ?? '';
         await _cargarPerfil(user.uid);
-        // Escuchar favoritos en tiempo real
         _fs.favoritosStream().listen((favs) {
           _favoritos
             ..clear()
@@ -100,23 +106,19 @@ class AppState extends ChangeNotifier {
       );
       final uid = cred.user!.uid;
 
-      // Guardar perfil — favoritos como array vacío
       await _db.collection('usuarios').doc(uid).set({
         'nombre':    nombre,
         'username':  username,
         'email':     email.trim(),
         'talla':     talla,
         'fotoUrl':   null,
-        'favoritos': <String>[],      // ✅ array, nunca string
+        'favoritos': <String>[],
         'creadoEn':  FieldValue.serverTimestamp(),
       });
 
-      // Subir prendas con await y manejo de error
-      try {
-        await _fs.subirPrendasIniciales(PrendasData.prendas);
-      } catch (e) {
-        debugPrint('Error subiendo prendas iniciales: $e');
-      }
+      _fs.subirPrendasIniciales(PrendasData.prendas).catchError((e) {
+        debugPrint('Error subiendo prendas: $e');
+      });
 
       _setLoading(false);
       return true;
@@ -129,7 +131,6 @@ class AppState extends ChangeNotifier {
 
   Future<void> logout() async => await _auth.signOut();
 
-  // ── Favoritos — usan arrayUnion/arrayRemove en Firestore ──────────
   Future<void> toggleFavorito(String prendaId) async {
     if (_favoritos.contains(prendaId)) {
       _favoritos.remove(prendaId);
@@ -159,15 +160,34 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ✅ Guardar cuestionario de estilo en Firestore
+  Future<void> actualizarCuestionario({
+    required String estilo,
+    required String colores,
+    required String ocasion,
+    required String temperatura,
+  }) async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+    await _db.collection('usuarios').doc(user.uid).update({
+      'cuestionario': {
+        'estilo':      estilo,
+        'colores':     colores,
+        'ocasion':     ocasion,
+        'temperatura': temperatura,
+      },
+    });
+  }
+
   String _mensajeError(String code) {
     switch (code) {
-      case 'user-not-found':        return 'No existe ninguna cuenta con ese email';
-      case 'wrong-password':        return 'Contraseña incorrecta';
-      case 'email-already-in-use':  return 'Ya existe una cuenta con ese email';
-      case 'weak-password':         return 'La contraseña debe tener al menos 6 caracteres';
-      case 'invalid-email':         return 'El formato del email no es válido';
-      case 'too-many-requests':     return 'Demasiados intentos. Espera un momento';
-      default:                      return 'Error de autenticación. Inténtalo de nuevo';
+      case 'user-not-found':       return 'No existe ninguna cuenta con ese email';
+      case 'wrong-password':       return 'Contraseña incorrecta';
+      case 'email-already-in-use': return 'Ya existe una cuenta con ese email';
+      case 'weak-password':        return 'La contraseña debe tener al menos 6 caracteres';
+      case 'invalid-email':        return 'El formato del email no es válido';
+      case 'too-many-requests':    return 'Demasiados intentos. Espera un momento';
+      default:                     return 'Error de autenticación. Inténtalo de nuevo';
     }
   }
 

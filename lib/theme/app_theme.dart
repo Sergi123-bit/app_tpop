@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
 
-  // ── Colores ──────────────────────────────────────────────────────
+  // ── Colores modo oscuro ──────────────────────────────────────────
   static const Color black     = Color(0xFF0A0A0F);
   static const Color ash       = Color(0xFF1C1C28);
   static const Color ash2      = Color(0xFF2A2A3A);
@@ -19,41 +19,69 @@ class AppTheme {
   static const Color surface2  = Color(0xFF202030);
   static const Color border    = Color(0x33F5E6C8);
 
-  // ── Tema ─────────────────────────────────────────────────────────
-  static ThemeData get theme {
+  // ── Colores modo claro ───────────────────────────────────────────
+  static const Color lightBg       = Color(0xFFF5F5F5);
+  static const Color lightSurface  = Color(0xFFFFFFFF);
+  static const Color lightSurface2 = Color(0xFFEEEEF5);
+  static const Color lightBorder   = Color(0xFFDDDDEE);
+  static const Color lightText     = Color(0xFF0A0A0F);
+  static const Color lightGrey     = Color(0xFF666677);
+
+  // ── Tema oscuro ──────────────────────────────────────────────────
+  static ThemeData get darkTheme => _buildTheme(Brightness.dark);
+
+  // ── Tema claro ───────────────────────────────────────────────────
+  static ThemeData get lightTheme => _buildTheme(Brightness.light);
+
+  // ── Constructor de tema ──────────────────────────────────────────
+  static ThemeData _buildTheme(Brightness brightness) {
+    final isDark = brightness == Brightness.dark;
+
+    final bgColor      = isDark ? black      : lightBg;
+    final surfaceColor = isDark ? surface    : lightSurface;
+    final surface2Color= isDark ? surface2   : lightSurface2;
+    final borderColor  = isDark ? border     : lightBorder;
+    final textColor    = isDark ? white      : lightText;
+    final greyColor    = isDark ? grey       : lightGrey;
+    final greyLColor   = isDark ? greyLight  : lightGrey;
+    final fillColor    = isDark ? surface2   : lightSurface;
+
     return ThemeData(
       useMaterial3: true,
-      brightness: Brightness.dark,
-      scaffoldBackgroundColor: black,
-      colorScheme: const ColorScheme.dark(
-        background: black,
-        surface: surface,
+      brightness: brightness,
+      scaffoldBackgroundColor: bgColor,
+      colorScheme: ColorScheme(
+        brightness: brightness,
+        background: bgColor,
+        surface: surfaceColor,
         primary: blue,
         secondary: red,
         onPrimary: white,
         onSecondary: white,
-        onSurface: white,
+        onSurface: textColor,
+        onBackground: textColor,
         error: redLight,
+        onError: white,
       ),
       textTheme: GoogleFonts.dmSansTextTheme(
-        const TextTheme(
-          displayLarge: TextStyle(color: white,     fontSize: 36, fontWeight: FontWeight.w700),
-          titleLarge:   TextStyle(color: white,     fontSize: 20, fontWeight: FontWeight.w600),
-          titleMedium:  TextStyle(color: white,     fontSize: 16, fontWeight: FontWeight.w500),
-          bodyLarge:    TextStyle(color: white,     fontSize: 15),
-          bodyMedium:   TextStyle(color: greyLight, fontSize: 13),
-          bodySmall:    TextStyle(color: grey,      fontSize: 11),
-          labelLarge:   TextStyle(color: white,     fontSize: 14, fontWeight: FontWeight.w600, letterSpacing: 1),
+        TextTheme(
+          displayLarge: TextStyle(color: textColor,  fontSize: 36, fontWeight: FontWeight.w700),
+          titleLarge:   TextStyle(color: textColor,  fontSize: 20, fontWeight: FontWeight.w600),
+          titleMedium:  TextStyle(color: textColor,  fontSize: 16, fontWeight: FontWeight.w500),
+          bodyLarge:    TextStyle(color: textColor,  fontSize: 15),
+          bodyMedium:   TextStyle(color: greyLColor, fontSize: 13),
+          bodySmall:    TextStyle(color: greyColor,  fontSize: 11),
+          labelLarge:   TextStyle(color: textColor,  fontSize: 14, fontWeight: FontWeight.w600, letterSpacing: 1),
         ),
       ),
       appBarTheme: AppBarTheme(
-        backgroundColor: black,
+        backgroundColor: bgColor,
         elevation: 0,
         centerTitle: true,
         titleTextStyle: GoogleFonts.bebasNeue(
-          color: white, fontSize: 22, letterSpacing: 3,
+          color: textColor, fontSize: 22, letterSpacing: 3,
         ),
-        iconTheme: const IconThemeData(color: white),
+        iconTheme: IconThemeData(color: textColor),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -66,22 +94,22 @@ class AppTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: goldWhite,
-          side: const BorderSide(color: goldWhite, width: 1),
+          foregroundColor: isDark ? goldWhite : blue,
+          side: BorderSide(color: isDark ? goldWhite : blue, width: 1),
           minimumSize: const Size(double.infinity, 52),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: surface2,
+        fillColor: fillColor,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: border),
+          borderSide: BorderSide(color: borderColor),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: border, width: 0.5),
+          borderSide: BorderSide(color: borderColor, width: 0.5),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -91,19 +119,22 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: red, width: 1),
         ),
-        hintStyle:  const TextStyle(color: grey,      fontSize: 14),
-        labelStyle: const TextStyle(color: greyLight, fontSize: 14),
+        hintStyle:  TextStyle(color: greyColor,  fontSize: 14),
+        labelStyle: TextStyle(color: greyLColor, fontSize: 14),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
       cardTheme: CardThemeData(
-        color: surface,
+        color: surfaceColor,
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14),
-          side: const BorderSide(color: border, width: 0.5),
+          side: BorderSide(color: borderColor, width: 0.5),
         ),
       ),
-      dividerTheme: const DividerThemeData(color: border, thickness: 0.5),
+      dividerTheme: DividerThemeData(color: borderColor, thickness: 0.5),
     );
   }
+
+  // Mantenim per compatibilitat — apunta al tema fosc
+  static ThemeData get theme => darkTheme;
 }
